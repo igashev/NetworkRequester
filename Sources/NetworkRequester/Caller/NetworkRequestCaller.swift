@@ -1,12 +1,22 @@
 import Foundation
 
-public struct NetworkRequestCaller {
+public class NetworkRequestCaller {
+    
+    private let decoder: JSONDecoder
+    
+    public init(decoder: JSONDecoder = JSONDecoder()) {
+        self.decoder = decoder
+    }
     
     public func call<Model: Decodable>(
         withRequest request: URLRequest,
         response: @escaping (Result<Model, Error>) -> Void
     ) {
-        URLSession.shared.dataTask(with: request) { (data, urlResponse, error) in
+        URLSession.shared.dataTask(with: request) { [weak self] (data, urlResponse, error) in
+            guard let strongSelf = self else {
+                return
+            }
+            
             if let error = error {
                 response(.failure(error))
             } else {
@@ -22,10 +32,7 @@ public struct NetworkRequestCaller {
                     let status = ResponseStatus(statusCode: httpResponse.statusCode)
                     switch status {
                     case .success:
-                        let jsonDecoder = JSONDecoder()
-                        jsonDecoder.dateDecodingStrategy = .secondsSince1970
-                        
-                        let responseObject = try jsonDecoder.decode(Model.self, from: data)
+                        let responseObject = try strongSelf.decoder.decode(Model.self, from: data)
                         response(.success(responseObject))
                     default:
                         throw ResponseError.responseError(status)
