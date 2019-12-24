@@ -1,8 +1,8 @@
 import Foundation
 
-struct NetworkRequestBuilder {
+public struct NetworkRequestBuilder {
     
-    func build(
+    public func build(
         to endpoint: UrlProviding,
         environment: EnvironmentUrlProviding,
         httpMethod: HTTPMethod,
