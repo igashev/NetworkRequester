@@ -2,11 +2,18 @@ import Foundation
 
 public struct NetworkRequestBuilder {
     
-    public func build(
+    private let environment: EnvironmentUrlProviding
+    private let encoder: JSONEncoder
+    
+    public init(environment: EnvironmentUrlProviding, encoder: JSONEncoder = JSONEncoder()) {
+        self.environment = environment
+        self.encoder = encoder
+    }
+    
+    public func build<T: Encodable>(
         to endpoint: UrlProviding,
-        environment: EnvironmentUrlProviding,
         httpMethod: HTTPMethod,
-        body: Data? = nil,
+        body: T? = nil,
         headers: [HTTPHeader] = [],
         queryItems: [URLQueryItem] = []) throws -> URLRequest
     {
@@ -28,7 +35,10 @@ public struct NetworkRequestBuilder {
         var request = URLRequest(url: url)
         request.timeoutInterval = 30
         request.httpMethod = httpMethod.description
-        request.httpBody = body
+        if let body = body {
+            request.httpBody = try encoder.encode(body)
+        }
+        
         
         request.addHeader(HTTPHeader.json)
         for header in headers {
