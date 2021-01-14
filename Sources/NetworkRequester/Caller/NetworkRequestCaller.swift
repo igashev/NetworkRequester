@@ -1,46 +1,43 @@
 import Foundation
+import Combine
 
 public class NetworkRequestCaller {
     
-    private let decoder: JSONDecoder
+    public let decoder: JSONDecoder
+    public let urlSession: URLSession
     
-    public init(decoder: JSONDecoder = JSONDecoder()) {
+    public init(decoder: JSONDecoder = JSONDecoder(), urlSession: URLSession = .shared) {
         self.decoder = decoder
+        self.urlSession = urlSession
     }
     
-    public func call<Model: Decodable>(
-        withRequest request: URLRequest,
-        response: @escaping (Result<Model, Error>) -> Void
-    ) {
-        URLSession.shared.dataTask(with: request) { [weak self] (data, urlResponse, error) in
-            guard let strongSelf = self else {
-                return
-            }
-            
-            if let error = error {
-                response(.failure(error))
-            } else {
-                do {
-                    guard let data = data else {
-                        throw ResponseError.noDataReceived
-                    }
-                    
-                    guard let httpResponse = urlResponse as? HTTPURLResponse else {
-                        throw ResponseError.invalidResponseType
-                    }
-                    
-                    let status = ResponseStatus(statusCode: httpResponse.statusCode)
-                    switch status {
-                    case .success:
-                        let responseObject = try strongSelf.decoder.decode(Model.self, from: data)
-                        response(.success(responseObject))
-                    default:
-                        throw ResponseError.responseError(status)
-                    }
-                } catch {
-                    response(.failure(error))
+    public func call<Model: Decodable>(request: URLRequest) -> AnyPublisher<Model, Error> {
+        urlSession.dataTaskPublisher(for: request)
+            .tryMap { data, response -> Data in
+                guard
+                    let httpResponse = response as? HTTPURLResponse,
+                    let status = HTTPStatus(rawValue: httpResponse.statusCode)
+                else {
+                    throw NetworkingError.failure(.internalServerError)
+                }
+                
+                if status.isSuccess {
+                    return data
+                } else {
+                    throw NetworkingError.failure(status)
                 }
             }
-        }.resume()
+            .decode(type: Model.self, decoder: decoder)
+            .mapError { error in
+                print(error)
+                if let decodingError = error as? DecodingError {
+                    return NetworkingError.responseDecodingFailure(error: decodingError)
+                } else if let networkingError = error as? NetworkingError {
+                    return networkingError
+                } else {
+                    return NetworkingError.unknown
+                }
+            }
+            .eraseToAnyPublisher()
     }
 }
