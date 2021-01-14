@@ -2,20 +2,20 @@ import Foundation
 
 public struct NetworkRequestBuilder {
     
-    private let environment: EnvironmentUrlProviding
+    private let environment: URLProviding
     
-    public init(environment: EnvironmentUrlProviding) {
+    public init(environment: URLProviding) {
         self.environment = environment
     }
     
     public func build(
-        to endpoint: UrlProviding,
+        to endpoint: URLProviding,
         httpMethod: HTTPMethod,
         body: Data? = nil,
         headers: [HTTPHeader] = [],
         queryItems: [URLQueryItem] = []) throws -> URLRequest
     {
-        guard var url = URL(string: "\(environment.apiUrl)\(endpoint.url)") else {
+        guard var url = URL(string: "\(environment.url)\(endpoint.url)") else {
             throw NetworkRequestBuilderError.invalidUrl
         }
         
