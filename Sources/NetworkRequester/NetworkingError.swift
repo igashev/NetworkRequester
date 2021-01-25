@@ -1,7 +1,9 @@
 import protocol Foundation.LocalizedError
 
 public enum NetworkingError: LocalizedError {
-    case responseDecodingFailure(error: DecodingError)
+    case buildingURLFailure
+    case encodingError(error: EncodingError)
+    case decodingFailure(error: DecodingError)
     case failure(HTTPStatus)
     case unknown
 }
