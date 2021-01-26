@@ -32,7 +32,7 @@ public struct URLRequestBuilder {
         httpHeaders: [HTTPHeader] = [],
         httpBody: HTTPBody? = nil,
         queryParameters: URLQueryParameters? = nil,
-        timeoutInterval: TimeInterval
+        timeoutInterval: TimeInterval = 30
     ) {
         self._environment = environment
         self._endpoint = endpoint
