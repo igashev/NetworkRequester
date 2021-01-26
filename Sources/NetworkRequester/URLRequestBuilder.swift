@@ -1,18 +1,29 @@
 import Foundation
 
 public struct URLRequestBuilder {
-    public var environment: String { urlBuilder.environment }
-    public var endpoint: String { urlBuilder.endpoint }
-    public var fullUrl: String { urlBuilder.fullUrl }
-    public let defaultHeaders: [HTTPHeader] = [.json]
+    public var environment: String { _environment.url }
+    public var endpoint: String { _endpoint.url }
+    public var fullUrl: String { environment + endpoint }
+    public var queryParameters: [URLQueryItem] {
+        guard let queryParameters = _queryParameters,
+              let items = try? queryParameters.items()
+        else {
+            return []
+        }
+        
+        return items
+    }
     
     public let httpMethod: HTTPMethod
     public let httpBody: HTTPBody?
     public let httpHeaders: Set<HTTPHeader>
-    public let queryParameters: [URLQueryItem]
+    public let defaultHeaders: [HTTPHeader] = [.json]
+    
     public let timeoutInterval: TimeInterval
     
-    private let urlBuilder: URLBuilder
+    private let _environment: URLProviding
+    private let _endpoint: URLProviding
+    private let _queryParameters: URLQueryParameters?
     
     public init(
         environment: URLProviding,
@@ -20,19 +31,21 @@ public struct URLRequestBuilder {
         httpMethod: HTTPMethod,
         httpHeaders: [HTTPHeader] = [],
         httpBody: HTTPBody? = nil,
-        queryParameters: [URLQueryItem] = [],
+        queryParameters: URLQueryParameters? = nil,
         timeoutInterval: TimeInterval
     ) {
+        self._environment = environment
+        self._endpoint = endpoint
         self.httpMethod = httpMethod
         self.httpBody = httpBody
         self.httpHeaders = Set(httpHeaders + defaultHeaders)
-        self.queryParameters = queryParameters
+        self._queryParameters = queryParameters
         self.timeoutInterval = timeoutInterval
-        
-        self.urlBuilder = URLBuilder(environment: environment.url, endpoint: endpoint.url, queryParameters: queryParameters)
     }
     
     public func build() throws -> URLRequest {
+        let queryParameters = try _queryParameters?.items() ?? []
+        let urlBuilder = URLBuilder(environment: _environment.url, endpoint: _endpoint.url, queryParameters: queryParameters)
         let buildedUrl = try urlBuilder.build()
         
         var request = URLRequest(url: buildedUrl)
