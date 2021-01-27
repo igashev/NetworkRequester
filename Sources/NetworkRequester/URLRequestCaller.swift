@@ -22,6 +22,7 @@ public class URLRequestCaller {
     /// Method which calls the network request.
     /// - Parameter request: The `URLRequest` that should be called.
     /// - Returns: The result from the network call wrapped into `AnyPublisher`.
+    @available(iOS 13.0, *)
     public func call<Model: Decodable>(request: URLRequest) -> AnyPublisher<Model, NetworkingError> {
         urlSession.dataTaskPublisher(for: request)
             .tryMap { data, response -> Data in
@@ -54,6 +55,7 @@ public class URLRequestCaller {
     /// Convenient method which calls the builded network request using the `URLRequestBuilder` object. The building and the error handling of the `URLRequest` are handled here.
     /// - Parameter builder: The builder from which the `URLRequest` will be constructed and called.
     /// - Returns: The result from the network call wrapped into `AnyPublisher`.
+    @available(iOS 13.0, *)
     public func call<Model: Decodable>(builder: URLRequestBuilder) -> AnyPublisher<Model, NetworkingError> {
         do {
             let urlRequest = try builder.build()
