@@ -2,6 +2,13 @@ public struct HTTPHeader {
     public let name: String
     public let value: String
     
+    public init(name: String, value: String) {
+        self.name = name
+        self.value = value
+    }
+}
+
+extension HTTPHeader {
     /// A JSON HTTP header that has a name of `Content-Type` and a value of `application/json`
     public static let json = Self(name: "Content-Type", value: "application/json")
     
