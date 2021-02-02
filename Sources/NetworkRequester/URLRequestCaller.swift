@@ -23,32 +23,12 @@ public class URLRequestCaller {
     /// - Parameter request: The `URLRequest` that should be called.
     /// - Returns: The result from the network call wrapped into `AnyPublisher`.
     @available(iOS 13.0, *)
-    public func call<Model: Decodable>(request: URLRequest) -> AnyPublisher<Model, NetworkingError> {
+    public func call<D: Decodable>(request: URLRequest) -> AnyPublisher<D, NetworkingError> {
         urlSession.dataTaskPublisher(for: request)
-            .tryMap { data, response -> Data in
-                guard
-                    let httpResponse = response as? HTTPURLResponse,
-                    let status = HTTPStatus(rawValue: httpResponse.statusCode)
-                else {
-                    throw NetworkingError.failure(.internalServerError)
-                }
-                
-                if status.isSuccess {
-                    return data
-                } else {
-                    throw NetworkingError.failure(status)
-                }
-            }
-            .decode(type: Model.self, decoder: decoder)
-            .mapError { error in
-                if let decodingError = error as? DecodingError {
-                    return NetworkingError.decodingFailure(error: decodingError)
-                } else if let networkingError = error as? NetworkingError {
-                    return networkingError
-                } else {
-                    return NetworkingError.unknown
-                }
-            }
+            .tryMap { try Self.tryMapResponse(data: $0.data, urlResponse: $0.response) }
+            .map { Self.mapDataToEmptyIfPossible(data: $0, type: D.self) }
+            .decode(type: D.self, decoder: decoder)
+            .mapError { Self.mapError($0)}
             .eraseToAnyPublisher()
     }
     
@@ -60,13 +40,40 @@ public class URLRequestCaller {
         do {
             let urlRequest = try builder.build()
             return call(request: urlRequest)
-        } catch let error as NetworkingError {
-            return Fail(error: error)
-                .eraseToAnyPublisher()
         } catch {
+            let error = error as? NetworkingError ?? .unknown
             return Fail(error: error)
-                .mapError { _ in .unknown }
                 .eraseToAnyPublisher()
+        }
+    }
+    
+    private static func tryMapResponse(data: Data, urlResponse: URLResponse) throws -> Data {
+        guard
+            let httpResponse = urlResponse as? HTTPURLResponse,
+            let status = HTTPStatus(rawValue: httpResponse.statusCode)
+        else {
+            throw NetworkingError.failure(.internalServerError)
+        }
+        
+        guard status.isSuccess else {
+            throw NetworkingError.failure(status)
+        }
+        
+        return data
+    }
+    
+    private static func mapDataToEmptyIfPossible<T>(data: Data, type: T.Type) -> Data {
+        T.self == EmptyResponse.self ? EmptyResponse.emptyJSON : data
+    }
+    
+    private static func mapError(_ error: Error) -> NetworkingError {
+        switch error {
+        case let decodingError as DecodingError:
+            return NetworkingError.decodingFailure(error: decodingError)
+        case let networkingError as NetworkingError:
+            return networkingError
+        default:
+            return .unknown
         }
     }
 }

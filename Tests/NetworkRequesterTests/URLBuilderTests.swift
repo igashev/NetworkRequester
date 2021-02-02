@@ -15,7 +15,7 @@ final class URLBuilderTests: XCTestCase {
     
     func testURLSucceedsToBuildWithoutQueryItemsAndIsCorrect() throws {
         let environment = "www.google.com/"
-        let endpoint = "v1/terrick"
+        let endpoint = "v1/perfect"
         let builder = URLBuilder(environment: environment, endpoint: endpoint)
         
         let url = try XCTUnwrap(builder.build())
@@ -24,7 +24,7 @@ final class URLBuilderTests: XCTestCase {
     
     func testURLSucceedsToBuildWithQueryItems() throws {
         let environment = "www.google.com/"
-        let endpoint = "v1/ivaylo"
+        let endpoint = "v1/perfect15"
         let queryItem = URLQueryItem(name: "itemName", value: "itemValue")
         let builder = URLBuilder(environment: environment, endpoint: endpoint, queryParameters: [queryItem])
         
