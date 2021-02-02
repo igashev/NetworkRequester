@@ -52,7 +52,7 @@ public struct URLRequestBuilder {
         request.timeoutInterval = timeoutInterval
         request.httpMethod = httpMethod.description
         request.httpBody = try httpBody?.data()
-        request.addHeaders(defaultHeaders)
+        request.addHeaders(httpHeaders)
         return request
     }
 }
