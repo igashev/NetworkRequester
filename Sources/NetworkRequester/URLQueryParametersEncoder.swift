@@ -10,13 +10,12 @@ public enum URLQueryParametersEncoder {
             }
             
             return dictionary.compactMap { element in
-                guard element.value is Dictionary<AnyHashable, Any> else {
+                if element.value is Dictionary<AnyHashable, Any> {
                     print("🚨 Nested objects are not supported and will be skipped. \(#function)")
                     return nil
+                } else {
+                    return URLQueryItem(name: element.key, value: String(describing: element.value))
                 }
-                
-                return URLQueryItem(name: element.key, value: String(describing: element.value))
-                
             }
         } catch {
             throw NetworkingError.buildingURLFailure
