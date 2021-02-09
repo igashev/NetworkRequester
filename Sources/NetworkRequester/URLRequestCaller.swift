@@ -52,11 +52,11 @@ public class URLRequestCaller {
             let httpResponse = urlResponse as? HTTPURLResponse,
             let status = HTTPStatus(rawValue: httpResponse.statusCode)
         else {
-            throw NetworkingError.failure(.internalServerError)
+            throw NetworkingError.networking(.internalServerError)
         }
         
         guard status.isSuccess else {
-            throw NetworkingError.failure(status)
+            throw NetworkingError.networking(status)
         }
         
         return data
@@ -69,7 +69,7 @@ public class URLRequestCaller {
     private static func mapError(_ error: Error) -> NetworkingError {
         switch error {
         case let decodingError as DecodingError:
-            return NetworkingError.decodingFailure(error: decodingError)
+            return NetworkingError.decoding(error: decodingError)
         case let networkingError as NetworkingError:
             return networkingError
         default:

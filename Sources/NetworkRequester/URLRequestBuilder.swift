@@ -72,8 +72,8 @@ public struct URLRequestBuilder {
     }
     
     /// Builds the `URLRequest` by using the provided properties when initialising the builder.
-    /// - Throws: `NetworkingError.buildingURLFailure` if it fails to build the URL or
-    ///  `NetworkingError.encodingError(error:)` if it fails to encode the HTTP body.
+    /// - Throws: `NetworkingError.buildingURL` if it fails to build the URL or
+    ///  `NetworkingError.encoding(error:)` if it fails to encode the HTTP body.
     /// - Returns: A fully configured `URLRequest` that is ready to be used.
     public func build() throws -> URLRequest {
         let buildedUrl = try buildedURL()
@@ -86,7 +86,7 @@ public struct URLRequestBuilder {
     }
     
     /// Builds the URL.
-    /// - Throws: `NetworkingError.buildingURLFailure` if it fails to build the URL
+    /// - Throws: `NetworkingError.buildingURL` if it fails to build the URL
     /// - Returns: Full URL.
     private func buildedURL() throws -> URL {
         let queryParameters = try _queryParameters?.items() ?? []

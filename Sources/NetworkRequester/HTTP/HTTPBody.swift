@@ -8,7 +8,7 @@ public struct HTTPBody {
             do {
                 return try jsonEncoder.encode(encodable)
             } catch let error as EncodingError {
-                throw NetworkingError.encodingError(error: error)
+                throw NetworkingError.encoding(error: error)
             }
         }
     }

@@ -43,7 +43,7 @@ final class URLQueryParametersEncoderTests: XCTestCase {
             }
             
             switch error {
-            case .buildingURLFailure:
+            case .buildingURL:
                 break
             default:
                 XCTFail("Wrong error is thrown.")
@@ -62,7 +62,7 @@ final class URLQueryParametersEncoderTests: XCTestCase {
             }
             
             switch error {
-            case .buildingURLFailure:
+            case .buildingURL:
                 break
             default:
                 XCTFail("Wrong error is thrown.")

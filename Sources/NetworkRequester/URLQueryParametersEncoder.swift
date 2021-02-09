@@ -1,9 +1,9 @@
 import Foundation
 
 public enum URLQueryParametersEncoder {
-    public static func encode<E: Encodable>(encodable: E) throws -> [URLQueryItem] {
+    public static func encode<E: Encodable>(encodable: E, encoder: JSONEncoder = .init()) throws -> [URLQueryItem] {
         do {
-            let data = try JSONEncoder().encode(encodable)
+            let data = try encoder.encode(encodable)
             let json = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
             guard let dictionary = json as? [String: Any] else {
                 return []
@@ -18,7 +18,7 @@ public enum URLQueryParametersEncoder {
                 }
             }
         } catch {
-            throw NetworkingError.buildingURLFailure
+            throw NetworkingError.buildingURL
         }
     }
 }

@@ -13,11 +13,11 @@ struct URLBuilder {
     
     func build() throws -> URL {
         guard var urlComponents = URLComponents(string: environment) else {
-            throw NetworkingError.buildingURLFailure
+            throw NetworkingError.buildingURL
         }
         
         guard urlComponents.scheme != nil else {
-            throw NetworkingError.buildingURLFailure
+            throw NetworkingError.buildingURL
         }
         
         var endpointCopy = endpoint
@@ -35,7 +35,7 @@ struct URLBuilder {
         }
         
         guard let composedUrl = urlComponents.url else {
-            throw NetworkingError.buildingURLFailure
+            throw NetworkingError.buildingURL
         }
         
         return composedUrl

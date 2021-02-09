@@ -19,7 +19,7 @@ final class HTTPBodyTests: XCTestCase {
             }
             
             switch error {
-            case .encodingError:
+            case .encoding:
                 break
             default:
                 XCTFail("Wrong error is thrown.")
