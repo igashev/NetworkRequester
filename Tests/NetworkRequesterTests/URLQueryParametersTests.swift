@@ -4,7 +4,7 @@ import XCTest
 final class URLQueryParametersTests: XCTestCase {
     func testInitUsingEncodable() throws {
         let encodable = TestEncodable(name: "some inital name", age: 15)
-        let queryParameters = URLQueryParameters(encodable: encodable)
+        let queryParameters = URLQueryParameters(encodable: encodable, encoder: .init())
         
         XCTAssertNoThrow(try queryParameters.items())
         

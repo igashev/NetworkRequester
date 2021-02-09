@@ -23,7 +23,7 @@ struct URLBuilder {
         var endpointCopy = endpoint
         
         // Checks whether an additional slash is needed in order to construct a valid URL.
-        let shouldAddAdditionalSlash = !endpointCopy.hasPrefix(Constants.slash) && !environment.hasSuffix(Constants.slash)
+        let shouldAddAdditionalSlash = !endpointCopy.hasPrefix(Constants.slash)
         if shouldAddAdditionalSlash {
             endpointCopy.insert("/", at: endpointCopy.startIndex)
         }

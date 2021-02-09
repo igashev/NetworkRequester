@@ -70,7 +70,7 @@ final class URLRequestBuilderTests: XCTestCase {
             environment: Environment(),
             endpoint: Endpoint(),
             httpMethod: .get,
-            queryParameters: .init(encodable: QueryParameter(age: .infinity))
+            queryParameters: .init(encodable: QueryParameter(age: .infinity), encoder: .init())
         )
         
         XCTAssertTrue(requestBuilder.queryParameters.isEmpty)

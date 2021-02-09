@@ -3,8 +3,7 @@ import Foundation
 public struct URLQueryParameters {
     public let items: () throws -> [URLQueryItem]
     
-    
-    public init<E: Encodable>(encodable: E, encoder: JSONEncoder = .init()) {
+    public init<E: Encodable>(encodable: E, encoder: JSONEncoder) {
         self.items = { try URLQueryParametersEncoder.encode(encodable: encodable, encoder: encoder) }
     }
     
