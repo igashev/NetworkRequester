@@ -1,22 +1,22 @@
 import Foundation
 import Combine
 
-/// Use this object to make network calls and receive decoded values or `NetworkingError` errors wrapped into Combine's `AnyPublisher`.
-public class URLRequestCaller {
-    
-    /// Decoder which decodes the received data from the network call.
-    public let decoder: JSONDecoder
+/// Use this object to make network calls and receive decoded values wrapped into Combine's `AnyPublisher`.
+public struct URLRequestCaller {
     
     /// Session object which is used to make the actual network call.
     public let urlSession: URLSession
     
+    /// Decoder which decodes the received data from the network call.
+    public let decoder: JSONDecoder
+    
     /// Initialises an object which can make network calls.
     /// - Parameters:
-    ///   - decoder: The decoder with which to decode the received data from the network call.
-    ///   - urlSession: The `URLSession` used to make the actual network call.
-    public init(decoder: JSONDecoder = JSONDecoder(), urlSession: URLSession = .shared) {
-        self.decoder = decoder
+    ///   - urlSession: The session that would make the actual network call. Defaults to `.shared`.
+    ///   - decoder: The decoder that would decode the received data from the network call.
+    public init(urlSession: URLSession = .shared, decoder: JSONDecoder) {
         self.urlSession = urlSession
+        self.decoder = decoder
     }
     
     /// Method which calls the network request.
@@ -36,7 +36,7 @@ public class URLRequestCaller {
     /// - Parameter builder: The builder from which the `URLRequest` will be constructed and called.
     /// - Returns: The result from the network call wrapped into `AnyPublisher`.
     @available(iOS 13.0, *)
-    public func call<Model: Decodable>(builder: URLRequestBuilder) -> AnyPublisher<Model, NetworkingError> {
+    public func call<D: Decodable>(builder: URLRequestBuilder) -> AnyPublisher<D, NetworkingError> {
         do {
             let urlRequest = try builder.build()
             return call(request: urlRequest)
