@@ -1,6 +1,16 @@
 import Foundation
 
+/// An object used to transform `Encodable` data models to `[URLQueryItem]`.
 public enum URLQueryParametersEncoder {
+    /// Transforms `Encodable` data model into `[URLQueryItem]`.
+    ///
+    /// Nested objects are not supported and will be skipped.
+    ///
+    /// - Parameters:
+    ///   - encodable: An encodable data model that would be transformed to query parameters.
+    ///   - encoder: An encoder that would do the transformation of the data model.
+    /// - Throws: `NetworkingError.buildingURL` if encoding fails.
+    /// - Returns: Transformed encodable data model into `[URLQueryItem]` or `[]` if the encodable object is not a `[String: Any]`.
     public static func encode<E: Encodable>(encodable: E, encoder: JSONEncoder = .init()) throws -> [URLQueryItem] {
         do {
             let data = try encoder.encode(encodable)

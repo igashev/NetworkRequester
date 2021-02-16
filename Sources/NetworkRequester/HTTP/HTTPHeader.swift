@@ -1,7 +1,15 @@
+/// Represents an HTTP header of a request.
 public struct HTTPHeader {
+    /// The name of the header.
     public let name: String
+    
+    /// The value of the header.
     public let value: String
     
+    /// Initializes `HTTPHeader` using the provided name and value.
+    /// - Parameters:
+    ///   - name: The name of the header.
+    ///   - value: The value of the header.
     public init(name: String, value: String) {
         self.name = name
         self.value = value
@@ -9,7 +17,7 @@ public struct HTTPHeader {
 }
 
 extension HTTPHeader {
-    /// A JSON HTTP header that has a name of `Content-Type` and a value of `application/json`
+    /// A JSON HTTP header that has a name of `Content-Type` and a value of `application/json`.
     public static let json = Self(name: "Content-Type", value: "application/json")
     
     /// An authorization HTTP header that has a name of `Authorization` and a value of `Bearer \(token)`
@@ -19,6 +27,9 @@ extension HTTPHeader {
         authorization(token: "Bearer \(token)")
     }
     
+    /// An authorization HTTP header that has a name of `Authorization` and a value of `token`.
+    /// - Parameter token: A token to be set as a value.
+    /// - Returns: An `HTTPHeader` instance with authorization name and a token value.
     public static func authorization(token: String) -> Self {
         .init(name: "Authorization", value: token)
     }

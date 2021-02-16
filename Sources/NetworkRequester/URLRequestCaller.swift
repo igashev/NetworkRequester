@@ -26,7 +26,7 @@ public class URLRequestCaller {
     public func call<D: Decodable>(request: URLRequest) -> AnyPublisher<D, NetworkingError> {
         urlSession.dataTaskPublisher(for: request)
             .tryMap { try Self.tryMapResponse(data: $0.data, urlResponse: $0.response) }
-            .map { Self.mapDataToEmptyIfPossible(data: $0, type: D.self) }
+            .map { Self.mapDataToEmptyIfNeeded(data: $0, type: D.self) }
             .decode(type: D.self, decoder: decoder)
             .mapError { Self.mapError($0)}
             .eraseToAnyPublisher()
@@ -62,7 +62,7 @@ public class URLRequestCaller {
         return data
     }
     
-    private static func mapDataToEmptyIfPossible<T>(data: Data, type: T.Type) -> Data {
+    private static func mapDataToEmptyIfNeeded<T>(data: Data, type: T.Type) -> Data {
         T.self == EmptyResponse.self ? EmptyResponse.emptyJSON : data
     }
     

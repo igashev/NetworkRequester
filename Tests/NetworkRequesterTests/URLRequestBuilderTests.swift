@@ -4,7 +4,7 @@ import XCTest
 final class URLRequestBuilderTests: XCTestCase {
     func testInitsCorrectly() {
         let encodableBody = Body(name: "some great name", personalNumber: 8531235)
-        let httpBody = HTTPBody(encodable: encodableBody)
+        let httpBody = HTTPBody(encodable: encodableBody, jsonEncoder: .init())
         
         let queryParams: [URLQueryItem] = [.init(name: "firstName", value: "someCoolFirstName")]
         let urlQueryParams = URLQueryParameters(queryItems: queryParams)
@@ -34,7 +34,7 @@ final class URLRequestBuilderTests: XCTestCase {
     
     func testBuildingURLRequestSucceeds() throws {
         let encodableBody = Body(name: "some great name", personalNumber: 8531235)
-        let httpBody = HTTPBody(encodable: encodableBody)
+        let httpBody = HTTPBody(encodable: encodableBody, jsonEncoder: .init())
         
         let queryParams: [URLQueryItem] = [.init(name: "firstName", value: "someCoolFirstName")]
         let urlQueryParams = URLQueryParameters(queryItems: queryParams)

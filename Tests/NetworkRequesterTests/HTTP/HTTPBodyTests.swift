@@ -4,12 +4,12 @@ import XCTest
 final class HTTPBodyTests: XCTestCase {
     func testBodyEncodingSucceeds() throws {
         let codable = TestCodable(name: "Codable name", age: 12)
-        let body = HTTPBody(encodable: codable)
+        let body = HTTPBody(encodable: codable, jsonEncoder: .init())
         XCTAssertNoThrow(try body.data())
     }
     
     func testBodyEncodingFails() {
-        let body = HTTPBody(encodable: Double.infinity)
+        let body = HTTPBody(encodable: Double.infinity, jsonEncoder: .init())
         XCTAssertThrowsError(try body.data()) { error in
             XCTAssertTrue(error is NetworkingError)
             
@@ -29,7 +29,7 @@ final class HTTPBodyTests: XCTestCase {
     
     func testDataEncodingCorrectly() throws {
         let codable = TestCodable(name: "some codable strange name", age: 19)
-        let body = try HTTPBody(encodable: codable).data()
+        let body = try HTTPBody(encodable: codable, jsonEncoder: .init()).data()
         let decodedData = try JSONDecoder().decode(TestCodable.self, from: body)
         XCTAssertEqual(decodedData, codable)
     }
