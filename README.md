@@ -5,6 +5,7 @@ NetworkRequester is an HTTP Combine-only networking library.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Conclusion](#conclusion)
 
 ## Requirements
 
@@ -77,3 +78,7 @@ let caller = URLRequestCaller(decoder: JSONDecoder())
 let examplePublisher: AnyPublisher<User, NetworkingError> = caller.call(using: requestBuilder) // Expects response data as User is specified as Output
 ```
 Take into account that when a response data is expected, a type that conforms to `Encodable` should be specified as `Output`. Otherwise `Void`.
+
+## Conclusion
+
+NetworkRequester is still very young. Improvements and new functionalities will be coming. Pull requests and suggestions are very welcomed.
