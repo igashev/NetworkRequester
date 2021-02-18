@@ -2,6 +2,7 @@ import XCTest
 import Combine
 @testable import NetworkRequester
 
+@available(iOS 13.0, *)
 final class URLRequestCallerTests: XCTestCase {
     private var encodedData: Data {
         let testableModel = TestEncodable(name: "first name", age: 1236)
@@ -311,7 +312,7 @@ final class URLRequestCallerTests: XCTestCase {
             .store(in: &cancellables)
     }
 }
-
+@available(iOS 13.0, *)
 private extension URLRequestCallerTests {
     struct TestEncodable: Codable {
         let name: String

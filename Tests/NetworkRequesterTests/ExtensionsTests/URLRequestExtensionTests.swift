@@ -2,7 +2,7 @@ import XCTest
 @testable import NetworkRequester
 
 final class URLRequestExtensionTests: XCTestCase {
-    func testAddingHeader() throws {
+    func testAddHeaders() throws {
         var request = URLRequest(url: URL(string: "https://google.com")!)
         
         let header1 = HTTPHeader(name: "headerField", value: "headerValue")
@@ -18,7 +18,7 @@ final class URLRequestExtensionTests: XCTestCase {
         XCTAssertEqual(header2Value, "headerValue2")
     }
     
-    func testAddingMultipleHeaders() throws {
+    func testAddMultipleHeadersAtOnce() throws {
         var request = URLRequest(url: URL(string: "https://google.com")!)
         
         let header1 = HTTPHeader(name: "headerField", value: "headerValue")
@@ -33,5 +33,19 @@ final class URLRequestExtensionTests: XCTestCase {
         
         let header2Value = try XCTUnwrap(headers["headerField2"])
         XCTAssertEqual(header2Value, "headerValue2")
+    }
+    
+    func testAddMulpleHeadersWithTheSameName() throws {
+        let header1 = HTTPHeader.authorization(bearerToken: "secret-bearer-token")
+        let header2 = HTTPHeader.authorization(token: "secret-auth-token")
+        
+        var request = URLRequest(url: URL(string: "https://google.com")!)
+        request.addHeaders([header1, header2])
+        
+        let headers = try XCTUnwrap(request.allHTTPHeaderFields)
+        XCTAssertEqual(headers.count, 1)
+        
+        let headerValue = try XCTUnwrap(headers["Authorization"])
+        XCTAssertEqual(headerValue, [header1.value, header2.value].joined(separator: ","))
     }
 }
