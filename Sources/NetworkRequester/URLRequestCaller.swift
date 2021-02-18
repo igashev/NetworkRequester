@@ -9,7 +9,7 @@ public struct URLRequestCaller {
     public let decoder: JSONDecoder
     
     /// Gets the data task publisher.
-    public let getDataDataTaskPublisher: (URLRequest) -> AnyURLSessionDataPublisher
+    private let getDataDataTaskPublisher: (URLRequest) -> AnyURLSessionDataPublisher
     
     /// Initialises an object which can make network calls.
     /// - Parameters:
@@ -31,7 +31,7 @@ public struct URLRequestCaller {
     /// Method which calls the network request.
     /// - Parameter request: The `URLRequest` that should be called.
     /// - Returns: The result from the network call wrapped into `AnyPublisher`.
-    public func call<D: Decodable>(request: URLRequest) -> AnyPublisher<D, NetworkingError> {
+    public func call<D: Decodable>(using request: URLRequest) -> AnyPublisher<D, NetworkingError> {
         getDataDataTaskPublisher(request)
             .tryMap { try Self.tryMapResponse(data: $0.data, urlResponse: $0.response) }
             .decode(type: D.self, decoder: decoder)
@@ -42,7 +42,7 @@ public struct URLRequestCaller {
     /// Method which calls the network request without expecting a response body.
     /// - Parameter request: The `URLRequest` that should be called.
     /// - Returns: The result from the network call wrapped into `AnyPublisher`.
-    public func call(request: URLRequest) -> AnyPublisher<Void, NetworkingError> {
+    public func call(using request: URLRequest) -> AnyPublisher<Void, NetworkingError> {
         getDataDataTaskPublisher(request)
             .tryMap { try Self.tryMapResponse(data: $0.data, urlResponse: $0.response) }
             .tryMap { data in
@@ -60,10 +60,10 @@ public struct URLRequestCaller {
     /// Convenient method which calls the builded network request using the `URLRequestBuilder` object. The building and the error handling of the `URLRequest` are handled here.
     /// - Parameter builder: The builder from which the `URLRequest` will be constructed and called.
     /// - Returns: The result from the network call wrapped into `AnyPublisher`.
-    public func call<D: Decodable>(builder: URLRequestBuilder) -> AnyPublisher<D, NetworkingError> {
+    public func call<D: Decodable>(using builder: URLRequestBuilder) -> AnyPublisher<D, NetworkingError> {
         do {
             let urlRequest = try builder.build()
-            return call(request: urlRequest)
+            return call(using: urlRequest)
         } catch {
             return Fail(error: Self.mapError(error)).eraseToAnyPublisher()
         }
@@ -73,10 +73,10 @@ public struct URLRequestCaller {
     /// The building and the error handling of the `URLRequest` are handled here.
     /// - Parameter builder: The builder from which the `URLRequest` will be constructed and called.
     /// - Returns: The result from the network call wrapped into `AnyPublisher`.
-    public func call(builder: URLRequestBuilder) -> AnyPublisher<Void, NetworkingError> {
+    public func call(using builder: URLRequestBuilder) -> AnyPublisher<Void, NetworkingError> {
         do {
             let urlRequest = try builder.build()
-            return call(request: urlRequest)
+            return call(using: urlRequest)
         } catch {
             return Fail(error: Self.mapError(error)).eraseToAnyPublisher()
         }

@@ -22,7 +22,7 @@ final class URLRequestCallerTests: XCTestCase {
             }
         )
         
-        let testObjectResponsePublisher: AnyPublisher<TestEncodable, NetworkingError> = caller.call(request: request)
+        let testObjectResponsePublisher: AnyPublisher<TestEncodable, NetworkingError> = caller.call(using: request)
         testObjectResponsePublisher.sink(
             receiveCompletion: { completion in
                 switch completion {
@@ -46,7 +46,7 @@ final class URLRequestCallerTests: XCTestCase {
             getDataPublisher: { _ in Fail(error: URLError(.badURL)).eraseToAnyPublisher() }
         )
         
-        caller.call(request: URLRequest(url: URL(string: "https://google.com")!))
+        caller.call(using: URLRequest(url: URL(string: "https://google.com")!))
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -76,7 +76,7 @@ final class URLRequestCallerTests: XCTestCase {
             }
         )
         
-        caller.call(request: URLRequest(url: URL(string: "https://google.com")!))
+        caller.call(using: URLRequest(url: URL(string: "https://google.com")!))
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -111,7 +111,7 @@ final class URLRequestCallerTests: XCTestCase {
             }
         )
         
-        caller.call(request: URLRequest(url: URL(string: "https://google.com")!))
+        caller.call(using: URLRequest(url: URL(string: "https://google.com")!))
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -146,7 +146,7 @@ final class URLRequestCallerTests: XCTestCase {
             }
         )
         
-        let intResponsePublisher: AnyPublisher<Int, NetworkingError> = caller.call(request: request)
+        let intResponsePublisher: AnyPublisher<Int, NetworkingError> = caller.call(using: request)
         intResponsePublisher
             .sink(
                 receiveCompletion: { completion in
@@ -177,7 +177,7 @@ final class URLRequestCallerTests: XCTestCase {
             }
         )
         
-        caller.call(request: request)
+        caller.call(using: request)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -207,7 +207,7 @@ final class URLRequestCallerTests: XCTestCase {
             }
         )
         
-        caller.call(request: request)
+        caller.call(using: request)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -233,7 +233,7 @@ final class URLRequestCallerTests: XCTestCase {
         )
         
         let builder = URLRequestBuilder(environment: Environment(), endpoint: Environment(), httpMethod: .get)
-        caller.call(builder: builder)
+        caller.call(using: builder)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -259,7 +259,7 @@ final class URLRequestCallerTests: XCTestCase {
         )
         
         let builder = URLRequestBuilder(environment: Environment(url: "dad asdas"), endpoint: Environment(url: "dad asdas"), httpMethod: .get)
-        caller.call(builder: builder)
+        caller.call(using: builder)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -290,7 +290,7 @@ final class URLRequestCallerTests: XCTestCase {
         )
 
         let builder = URLRequestBuilder(environment: Environment(url: "dad asdas"), endpoint: Environment(url: "dad asdas"), httpMethod: .get)
-        let intResponsePublisher: AnyPublisher<Int, NetworkingError> = caller.call(builder: builder)
+        let intResponsePublisher: AnyPublisher<Int, NetworkingError> = caller.call(using: builder)
         intResponsePublisher
             .sink(
                 receiveCompletion: { completion in
