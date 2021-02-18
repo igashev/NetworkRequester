@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "NetworkRequester",
     platforms: [
-        .iOS(.v13),
+        .iOS(.v11),
         .macOS(.v10_15),
         .tvOS(.v13),
     ],

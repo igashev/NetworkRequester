@@ -2,6 +2,7 @@ import Foundation
 import Combine
 
 /// Use this object to make network calls and receive decoded values wrapped into Combine's `AnyPublisher`.
+@available(iOS 13.0, *)
 public struct URLRequestCaller {
     public typealias AnyURLSessionDataPublisher = AnyPublisher<URLSession.DataTaskPublisher.Output, URLSession.DataTaskPublisher.Failure>
 
