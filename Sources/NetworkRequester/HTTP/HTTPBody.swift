@@ -11,7 +11,7 @@ public struct HTTPBody {
     /// - Parameters:
     ///   - encodable: An encodable data model that would be transformed to `Data`.
     ///   - jsonEncoder: An encoder that would do the transformation of the data model.
-    public init<T: Encodable>(encodable: T, jsonEncoder: JSONEncoder) {
+    public init<E: Encodable>(encodable: E, jsonEncoder: JSONEncoder) {
         self.data = {
             do {
                 return try jsonEncoder.encode(encodable)
