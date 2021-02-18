@@ -1,3 +1,4 @@
+/// Represents an HTTP method of a request.
 public enum HTTPMethod {
     case get, post, delete, patch
 }

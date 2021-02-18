@@ -1,3 +1,4 @@
+/// Represents an HTTP status of a request.
 public enum HTTPStatus: Int {
     
     // MARK: - 1xx Informational
@@ -85,6 +86,6 @@ extension HTTPStatus {
     public var isInformational: Bool { 100...199 ~= rawValue }
     public var isSuccess: Bool { 200...299 ~= rawValue }
     public var isRedirection: Bool { 300...399 ~= rawValue }
-    public var isClientError: Bool { 400 ... 499 ~= rawValue }
-    public var isServerError: Bool { 500 ... 599 ~= rawValue }
+    public var isClientError: Bool { 400...499 ~= rawValue }
+    public var isServerError: Bool { 500...599 ~= rawValue }
 }
