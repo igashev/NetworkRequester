@@ -126,9 +126,10 @@ private extension CombineCaller.AnyURLSessionDataPublisher {
         _ middleware: [Middleware],
         for request: URLRequest
     ) -> Publishers.HandleEvents<Self> {
-        handleEvents(
+        var request = request
+        return handleEvents(
             receiveSubscription: { _ in
-                middleware.forEach { $0.onRequest(request) }
+                middleware.forEach { $0.onRequest(&request) }
             },
             receiveOutput: { data, response in
                 middleware.forEach { $0.onResponse(data: data, response: response) }

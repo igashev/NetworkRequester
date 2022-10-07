@@ -25,8 +25,8 @@ public struct AsyncCaller {
         using builder: URLRequestBuilder,
         errorType: DE.Type
     ) async throws -> D {
-        let request = try builder.build()
-        middleware.forEach { $0.onRequest(request) }
+        var request = try builder.build()
+        middleware.forEach { $0.onRequest(&request) }
         
         do {
             let (data, response) = try await urlSession.data(for: request)
@@ -45,8 +45,8 @@ public struct AsyncCaller {
         using builder: URLRequestBuilder,
         errorType: E.Type
     ) async throws {
-        let request = try builder.build()
-        middleware.forEach { $0.onRequest(request) }
+        var request = try builder.build()
+        middleware.forEach { $0.onRequest(&request) }
         
         do {
             let (data, response) = try await urlSession.data(for: request)
