@@ -1,7 +1,7 @@
 import Foundation
 
 /// Gives the ability to plug into the `call` mechanizm of `URLRequestBuilder` to perform side effects
-public protocol URLRequestPlugable {
+public protocol Middleware {
     /// Called when a request start execution
     func onRequest(_ request: URLRequest)
     
@@ -12,8 +12,8 @@ public protocol URLRequestPlugable {
     func onError(_ error: NetworkingError, request: URLRequest?)
 }
 
-public extension URLRequestPlugable {
-    func onRequest(_ _: URLRequest) { }
-    func onResponse(data _: Data, response _: URLResponse) { }
-    func onError(_: NetworkingError, request: URLRequest?) { }
+public extension Middleware {
+    func onRequest(request: inout URLRequest) { }
+    func onResponse(data: Data, response: URLResponse) { }
+    func onError(error: NetworkingError, request: URLRequest?) { }
 }

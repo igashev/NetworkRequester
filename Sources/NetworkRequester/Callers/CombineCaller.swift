@@ -5,7 +5,7 @@ import Foundation
 public struct CombineCaller {
     public typealias AnyURLSessionDataPublisher = AnyPublisher<URLSession.DataTaskPublisher.Output, URLSession.DataTaskPublisher.Failure>
 
-    private let middleware: [URLRequestPlugable]
+    private let middleware: [Middleware]
     private let utility: CallerUtility
     
     /// Gets the data task publisher.
@@ -16,7 +16,11 @@ public struct CombineCaller {
     ///   - urlSession: Session that would make the actual network call.
     ///   - decoder: Decoder that would decode the received data from the network call.
     ///   - middleware: Middleware that is injected in the networking events.
-    public init(urlSession: URLSession = .shared, decoder: JSONDecoder, middleware: [URLRequestPlugable] = []) {
+    public init(
+        urlSession: URLSession = .shared,
+        decoder: JSONDecoder,
+        middleware: [Middleware] = []
+    ) {
         self.init(
             decoder: decoder,
             getDataPublisher: { urlSession.dataTaskPublisher(for: $0).eraseToAnyPublisher() },
@@ -31,7 +35,7 @@ public struct CombineCaller {
     init(
         decoder: JSONDecoder,
         getDataPublisher: @escaping (URLRequest) -> AnyURLSessionDataPublisher,
-        middleware: [URLRequestPlugable] = []
+        middleware: [Middleware] = []
     ) {
         self.middleware = middleware
         self.getDataDataTaskPublisher = getDataPublisher
@@ -119,7 +123,7 @@ public extension CombineCaller {
 
 private extension CombineCaller.AnyURLSessionDataPublisher {
     func attachMiddleware(
-        _ middleware: [URLRequestPlugable],
+        _ middleware: [Middleware],
         for request: URLRequest
     ) -> Publishers.HandleEvents<Self> {
         handleEvents(
@@ -135,7 +139,7 @@ private extension CombineCaller.AnyURLSessionDataPublisher {
 
 private extension Publisher where Failure == NetworkingError {
     func attachCompletionMiddleware(
-        _ middleware: [URLRequestPlugable],
+        _ middleware: [Middleware],
         request: URLRequest?
     ) -> Publishers.HandleEvents<Self> {
         handleEvents(receiveCompletion: { completion in

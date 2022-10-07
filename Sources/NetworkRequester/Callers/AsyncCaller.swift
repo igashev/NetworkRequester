@@ -2,7 +2,7 @@ import Foundation
 
 /// Use this object to make network calls and receive decoded values using the new structured concurrency (async/await).
 public struct AsyncCaller {
-    private let middleware: [URLRequestPlugable]
+    private let middleware: [Middleware]
     private let urlSession: URLSession
     private let utility: CallerUtility
     
@@ -11,7 +11,11 @@ public struct AsyncCaller {
     ///   - urlSession: Session that would make the actual network call.
     ///   - decoder: Decoder that would decode the received data from the network call.
     ///   - middleware: Middleware that is injected in the networking events.
-    public init(urlSession: URLSession = .shared, decoder: JSONDecoder, middleware: [URLRequestPlugable] = []) {
+    public init(
+        urlSession: URLSession = .shared,
+        decoder: JSONDecoder,
+        middleware: [Middleware] = []
+    ) {
         self.urlSession = urlSession
         self.middleware = middleware
         self.utility = .init(decoder: decoder)

@@ -400,7 +400,7 @@ final class URLRequestCallerTests: XCTestCase {
     }
 }
 
-private class TestMiddleware: URLRequestPlugable {
+private class TestMiddleware: Middleware {
 
     let onRequestExpectation: XCTestExpectation
     let onResponseExpectation: XCTestExpectation
