@@ -2,11 +2,20 @@ import XCTest
 import Combine
 @testable import NetworkRequester
 
-@available(iOS 13.0, *)
 final class URLRequestCallerTests: XCTestCase {
+
+    struct TestError: Error, Codable, Equatable {
+        let message: String
+    }
+
     private var encodedData: Data {
         let testableModel = TestEncodable(name: "first name", age: 1236)
         return try! JSONEncoder().encode(testableModel)
+    }
+
+    private var encodedTestErrorData: Data {
+        let testableError = TestError(message: "Something went wrong")
+        return try! JSONEncoder().encode(testableError)
     }
     
     private let decoder = JSONDecoder()
@@ -14,16 +23,18 @@ final class URLRequestCallerTests: XCTestCase {
     private var cancellables = Set<AnyCancellable>()
     
     func testCallSucceeds() {
-        let caller = URLRequestCaller(
+        let caller = CombineCaller(
             decoder: decoder,
             getDataPublisher: { [encodedData] _ in
                 Just((encodedData, .withStatus(200)))
-                    .setFailureType(to: URLRequestCaller.AnyURLSessionDataPublisher.Failure.self)
+                    .setFailureType(to: CombineCaller.AnyURLSessionDataPublisher.Failure.self)
                     .eraseToAnyPublisher()
             }
         )
         
-        let testObjectResponsePublisher: AnyPublisher<TestEncodable, NetworkingError> = caller.call(using: request)
+        let testObjectResponsePublisher: AnyPublisher<TestEncodable, NetworkingError> = caller
+            .call(using: request, errorType: TestError.self)
+
         testObjectResponsePublisher.sink(
             receiveCompletion: { completion in
                 switch completion {
@@ -42,12 +53,12 @@ final class URLRequestCallerTests: XCTestCase {
     }
     
     func testCallFailsDueToURLError() {
-        let caller = URLRequestCaller(
+        let caller = CombineCaller(
             decoder: decoder,
             getDataPublisher: { _ in Fail(error: URLError(.badURL)).eraseToAnyPublisher() }
         )
         
-        caller.call(using: URLRequest(url: URL(string: "https://google.com")!))
+        caller.call(using: URLRequest(url: URL(string: "https://google.com")!), errorType: TestError.self)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -68,25 +79,25 @@ final class URLRequestCallerTests: XCTestCase {
     }
     
     func testCallFailsDueToInvalidHTTPResponse() {
-        let caller = URLRequestCaller(
+        let caller = CombineCaller(
             decoder: decoder,
-            getDataPublisher: { _ in
-                Just((.init(), .withStatus(1000)))
-                    .setFailureType(to: URLRequestCaller.AnyURLSessionDataPublisher.Failure.self)
+            getDataPublisher: { [encodedTestErrorData] _ in
+                Just((encodedTestErrorData, .withStatus(1000)))
+                    .setFailureType(to: CombineCaller.AnyURLSessionDataPublisher.Failure.self)
                     .eraseToAnyPublisher()
             }
         )
         
-        caller.call(using: URLRequest(url: URL(string: "https://google.com")!))
+        caller.call(using: URLRequest(url: URL(string: "https://google.com")!), errorType: TestError.self)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
                     case .failure(let error):
                         switch error {
-                        case .networking(let status):
+                        case .networking(let status, let decodedError):
                             switch status {
                             case .internalServerError:
-                                break
+                                XCTAssertEqual(decodedError as? TestError, TestError(message: "Something went wrong"))
                             default:
                                 XCTFail("A wrong error is thrown. Expected NetworkingError.networking(status: .internalServerError), got \(error).")
                             }
@@ -103,25 +114,36 @@ final class URLRequestCallerTests: XCTestCase {
     }
     
     func testCallFailsDueToBadRequest() {
-        let caller = URLRequestCaller(
+        let didRequestExpectation = XCTestExpectation.calledOnce(description: "onRequest called")
+        let didReceiveExpectation = XCTestExpectation.calledOnce(description: "onResponse called")
+        let didErrorExpecatation = XCTestExpectation.calledOnce(description: "onError called")
+
+        let caller = CombineCaller(
             decoder: decoder,
-            getDataPublisher: { _ in
-                Just((.init(), .withStatus(HTTPStatus.badRequest.code)))
-                    .setFailureType(to: URLRequestCaller.AnyURLSessionDataPublisher.Failure.self)
+            getDataPublisher: { [encodedTestErrorData] _ in
+                Just((encodedTestErrorData, .withStatus(HTTPStatus.badRequest.code)))
+                    .setFailureType(to: CombineCaller.AnyURLSessionDataPublisher.Failure.self)
                     .eraseToAnyPublisher()
-            }
+            },
+            middleware: [
+                TestMiddleware(
+                    onRequestExpectation: didRequestExpectation,
+                    onResponseExpectation: didReceiveExpectation,
+                    onErrorExpectation: didErrorExpecatation
+                )
+            ]
         )
         
-        caller.call(using: URLRequest(url: URL(string: "https://google.com")!))
+        caller.call(using: URLRequest(url: URL(string: "https://google.com")!), errorType: TestError.self)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
                     case .failure(let error):
                         switch error {
-                        case .networking(let status):
+                        case .networking(let status, let decodedError):
                             switch status {
                             case .badRequest:
-                                break
+                                XCTAssertEqual(decodedError as? TestError, TestError(message: "Something went wrong"))
                             default:
                                 XCTFail("A wrong error is thrown. Expected NetworkingError.networking(status: .badRequest), got \(error).")
                             }
@@ -135,19 +157,32 @@ final class URLRequestCallerTests: XCTestCase {
                 receiveValue: { data in XCTFail("Expected NetworkingError.unknown, got \(data).") }
             )
             .store(in: &cancellables)
+        
+        wait(for: [didRequestExpectation, didReceiveExpectation, didErrorExpecatation], timeout: 0.5)
     }
     
     func testResponseToBeIntButGotEmpty() {
-        let caller = URLRequestCaller(
+        let didRequestExpectation = XCTestExpectation.calledOnce(description: "onRequest called")
+        let didReceiveExpectation = XCTestExpectation.calledOnce(description: "onResponse called")
+        let didErrorExpecatation = XCTestExpectation.calledOnce(description: "onError called")
+        
+        let caller = CombineCaller(
             decoder: decoder,
             getDataPublisher: { _ in
                 Just((data: .init(), response: .withStatus(200)))
-                    .setFailureType(to: URLRequestCaller.AnyURLSessionDataPublisher.Failure.self)
+                    .setFailureType(to: CombineCaller.AnyURLSessionDataPublisher.Failure.self)
                     .eraseToAnyPublisher()
-            }
+            },
+            middleware: [
+                TestMiddleware(
+                    onRequestExpectation: didRequestExpectation,
+                    onResponseExpectation: didReceiveExpectation,
+                    onErrorExpectation: didErrorExpecatation
+                )
+            ]
         )
         
-        let intResponsePublisher: AnyPublisher<Int, NetworkingError> = caller.call(using: request)
+        let intResponsePublisher: AnyPublisher<Int, NetworkingError> = caller.call(using: request, errorType: TestError.self)
         intResponsePublisher
             .sink(
                 receiveCompletion: { completion in
@@ -166,19 +201,32 @@ final class URLRequestCallerTests: XCTestCase {
                 receiveValue: { data in XCTFail("Expected NetworkingError.decoding(error: DecodingError), got \(data).") }
             )
             .store(in: &cancellables)
+        
+        wait(for: [didRequestExpectation, didReceiveExpectation, didErrorExpecatation], timeout: 0.5)
     }
     
     func testResponseToBeEmptyButGotData() {
-        let caller = URLRequestCaller(
+        let didRequestExpectation = XCTestExpectation.calledOnce(description: "onRequest called")
+        let didReceiveExpectation = XCTestExpectation.calledOnce(description: "onResponse called")
+        let didErrorExpecatation = XCTestExpectation.calledOnce(description: "onError called")
+
+        let caller = CombineCaller(
             decoder: decoder,
             getDataPublisher: { [encodedData] _ in
                 Just((data: encodedData, response: .withStatus(200)))
-                    .setFailureType(to: URLRequestCaller.AnyURLSessionDataPublisher.Failure.self)
+                    .setFailureType(to: CombineCaller.AnyURLSessionDataPublisher.Failure.self)
                     .eraseToAnyPublisher()
-            }
+            },
+            middleware: [
+                TestMiddleware(
+                    onRequestExpectation: didRequestExpectation,
+                    onResponseExpectation: didReceiveExpectation,
+                    onErrorExpectation: didErrorExpecatation
+                )
+            ]
         )
         
-        caller.call(using: request)
+        caller.call(using: request, errorType: TestError.self)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -196,19 +244,30 @@ final class URLRequestCallerTests: XCTestCase {
                 receiveValue: { data in XCTFail("Expected NetworkingError.decoding(error: DecodingError), got \(data).") }
             )
             .store(in: &cancellables)
+        
+        wait(for: [didRequestExpectation, didReceiveExpectation, didErrorExpecatation], timeout: 0.5)
     }
     
     func testResponseToBeEmptyAndGotEmpty() {
-        let caller = URLRequestCaller(
+        let didRequestExpectation = XCTestExpectation.calledOnce(description: "onRequest called")
+        let didReceiveExpecatation = XCTestExpectation.calledOnce(description: "onResponse called")
+
+        let caller = CombineCaller(
             decoder: decoder,
             getDataPublisher: { _ in
                 Just((data: .init(), response: .withStatus(200)))
-                    .setFailureType(to: URLRequestCaller.AnyURLSessionDataPublisher.Failure.self)
+                    .setFailureType(to: CombineCaller.AnyURLSessionDataPublisher.Failure.self)
                     .eraseToAnyPublisher()
-            }
+            },
+            middleware: [
+                TestMiddleware(
+                    onRequestExpectation: didRequestExpectation,
+                    onResponseExpectation: didReceiveExpecatation
+                )
+            ]
         )
         
-        caller.call(using: request)
+        caller.call(using: request, errorType: TestError.self)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -221,20 +280,31 @@ final class URLRequestCallerTests: XCTestCase {
                 receiveValue: { _ in }
             )
             .store(in: &cancellables)
+        
+        wait(for: [didRequestExpectation, didReceiveExpecatation], timeout: 0.5)
     }
     
     func testResponseToBeEmptyAndGotEmptyUsingURLRequestBuilder() {
-        let caller = URLRequestCaller(
+        let didRequestExpectation = XCTestExpectation.calledOnce(description: "onRequest called")
+        let didReceiveExpecatation = XCTestExpectation.calledOnce(description: "onResponse called")
+        
+        let caller = CombineCaller(
             decoder: decoder,
             getDataPublisher: { _ in
                 Just((data: .init(), response: .withStatus(200)))
-                    .setFailureType(to: URLRequestCaller.AnyURLSessionDataPublisher.Failure.self)
+                    .setFailureType(to: CombineCaller.AnyURLSessionDataPublisher.Failure.self)
                     .eraseToAnyPublisher()
-            }
+            },
+            middleware: [
+                TestMiddleware(
+                    onRequestExpectation: didRequestExpectation,
+                    onResponseExpectation: didReceiveExpecatation
+                )
+            ]
         )
         
         let builder = URLRequestBuilder(environment: Environment(), endpoint: Environment(), httpMethod: .get)
-        caller.call(using: builder)
+        caller.call(using: builder, errorType: TestError.self)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -247,20 +317,24 @@ final class URLRequestCallerTests: XCTestCase {
                 receiveValue: { _ in }
             )
             .store(in: &cancellables)
+        
+        wait(for: [didRequestExpectation, didReceiveExpecatation], timeout: 0.5)
     }
     
     func testResponseToBeEmptyToFailDueToBuilderError() {
-        let caller = URLRequestCaller(
+        let shouldErrorExpectation = expectation(description: "onError called expected")
+        let caller = CombineCaller(
             decoder: decoder,
             getDataPublisher: { _ in
                 Just((data: .init(), response: .withStatus(200)))
-                    .setFailureType(to: URLRequestCaller.AnyURLSessionDataPublisher.Failure.self)
+                    .setFailureType(to: CombineCaller.AnyURLSessionDataPublisher.Failure.self)
                     .eraseToAnyPublisher()
-            }
+            },
+            middleware: [TestMiddleware(onErrorExpectation: shouldErrorExpectation)]
         )
         
         let builder = URLRequestBuilder(environment: Environment(url: "dad asdas"), endpoint: Environment(url: "dad asdas"), httpMethod: .get)
-        caller.call(using: builder)
+        caller.call(using: builder, errorType: TestError.self)
             .sink(
                 receiveCompletion: { completion in
                     switch completion {
@@ -278,20 +352,31 @@ final class URLRequestCallerTests: XCTestCase {
                 receiveValue: { data in XCTFail("Expected NetworkingError.buildingURL, got \(data).") }
             )
             .store(in: &cancellables)
+        
+        wait(for: [shouldErrorExpectation], timeout: 0.5)
     }
     
     func testResponseDataToFailDueToBuilderError() {
-        let caller = URLRequestCaller(
+        let shouldErrorExpectation = expectation(description: "onError called expected")
+        let caller = CombineCaller(
             decoder: decoder,
             getDataPublisher: { _ in
                 Just((data: .init(), response: .withStatus(200)))
-                    .setFailureType(to: URLRequestCaller.AnyURLSessionDataPublisher.Failure.self)
+                    .setFailureType(to: CombineCaller.AnyURLSessionDataPublisher.Failure.self)
                     .eraseToAnyPublisher()
-            }
+            },
+            middleware: [TestMiddleware(onErrorExpectation: shouldErrorExpectation)]
         )
-
-        let builder = URLRequestBuilder(environment: Environment(url: "dad asdas"), endpoint: Environment(url: "dad asdas"), httpMethod: .get)
-        let intResponsePublisher: AnyPublisher<Int, NetworkingError> = caller.call(using: builder)
+        let builder = URLRequestBuilder(
+            environment: Environment(url: "dad asdas"),
+            endpoint: Environment(url: "dad asdas"),
+            httpMethod: .get
+        )
+        let intResponsePublisher: AnyPublisher<Int, NetworkingError> = caller.call(
+            using: builder,
+            errorType: TestError.self
+        )
+        
         intResponsePublisher
             .sink(
                 receiveCompletion: { completion in
@@ -310,9 +395,59 @@ final class URLRequestCallerTests: XCTestCase {
                 receiveValue: { data in XCTFail("Expected NetworkingError.buildingURL, got \(data).") }
             )
             .store(in: &cancellables)
+        
+        wait(for: [shouldErrorExpectation], timeout: 0.5)
     }
 }
-@available(iOS 13.0, *)
+
+private class TestMiddleware: URLRequestPlugable {
+
+    let onRequestExpectation: XCTestExpectation
+    let onResponseExpectation: XCTestExpectation
+    let onErrorExpectation: XCTestExpectation
+    
+    init(
+        onRequestExpectation: XCTestExpectation = .failing(description: "onRequest called"),
+        onResponseExpectation: XCTestExpectation = .failing(description: "onResponse called"),
+        onErrorExpectation: XCTestExpectation = .failing(description: "onError called")
+    ) {
+        self.onRequestExpectation = onRequestExpectation
+        self.onResponseExpectation = onResponseExpectation
+        self.onErrorExpectation = onErrorExpectation
+    }
+    
+    // MARK: URLRequestPlugable
+    
+    func onRequest(_ request: URLRequest) {
+        onRequestExpectation.fulfill()
+    }
+    
+    func onResponse(data: Data, response: URLResponse) {
+        onResponseExpectation.fulfill()
+    }
+    
+    func onError(_ error: NetworkingError, request: URLRequest?) {
+        onErrorExpectation.fulfill()
+    }
+}
+
+private extension XCTestExpectation {
+    static func failing(description: String) -> XCTestExpectation {
+        let expectation = XCTestExpectation(description: description)
+        expectation.expectedFulfillmentCount = 1
+        expectation.fulfill()
+        expectation.assertForOverFulfill = true
+        return expectation
+    }
+    
+    static func calledOnce(description: String) -> XCTestExpectation {
+        let expectation = XCTestExpectation(description: description)
+        expectation.expectedFulfillmentCount = 1
+        expectation.assertForOverFulfill = true
+        return expectation
+    }
+}
+
 private extension URLRequestCallerTests {
     struct TestEncodable: Codable {
         let name: String

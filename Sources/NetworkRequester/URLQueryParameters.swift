@@ -42,3 +42,15 @@ public struct URLQueryParameters {
         self.items = { queryItems }
     }
 }
+
+extension URLQueryParameters: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        guard let queryParams = try? items() else {
+            return ""
+        }
+        
+        return queryParams
+            .map { "\($0.name): \($0.value ?? "")" }
+            .joined(separator: "; ")
+    }
+}

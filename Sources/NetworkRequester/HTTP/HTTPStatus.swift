@@ -1,5 +1,5 @@
 /// Represents an HTTP status of a request.
-public enum HTTPStatus: Int {
+public enum HTTPStatus: Int, Equatable {
     
     // MARK: - 1xx Informational
     

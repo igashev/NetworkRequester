@@ -21,3 +21,15 @@ public struct HTTPBody {
         }
     }
 }
+
+extension HTTPBody: Equatable {
+    public static func == (lhs: HTTPBody, rhs: HTTPBody) -> Bool {
+        do {
+            let lhsData = try lhs.data()
+            let rhsData = try rhs.data()
+            return lhsData == rhsData
+        } catch {
+            return false
+        }
+    }
+}
