@@ -13,7 +13,7 @@ public protocol Middleware {
 }
 
 public extension Middleware {
-    func onRequest(request: inout URLRequest) { }
+    func onRequest(_ request: inout URLRequest) { }
     func onResponse(data: Data, response: URLResponse) { }
-    func onError(error: NetworkingError, request: URLRequest?) { }
+    func onError(_ error: NetworkingError, request: URLRequest?) { }
 }
