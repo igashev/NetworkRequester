@@ -9,6 +9,7 @@ public struct AsyncCaller {
     private var middlewaresAsyncStream: AsyncThrowingStream<Middleware, Error> {
         .init { continuation in
             middlewares.forEach { continuation.yield($0) }
+            continuation.finish()
         }
     }
     
