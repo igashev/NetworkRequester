@@ -128,7 +128,8 @@ extension URLRequestBuilder: Equatable {
     public static func == (lhs: URLRequestBuilder, rhs: URLRequestBuilder) -> Bool {
         lhs.environment == rhs.environment &&
         lhs.endpoint == rhs.endpoint &&
-        lhs.queryParameters.sorted(by: { $0.name < $1.name }) == rhs.queryParameters.sorted(by: { $0.name < $1.name }) &&
+        lhs.queryParameters.sorted(by: { $0.name < $1.name }) ==
+        rhs.queryParameters.sorted(by: { $0.name < $1.name }) &&
         lhs.httpMethod == rhs.httpMethod &&
         lhs.httpHeaders == rhs.httpHeaders &&
         lhs.httpBody == rhs.httpBody &&
