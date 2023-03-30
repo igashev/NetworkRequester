@@ -24,7 +24,7 @@ final class URLRequestBuilderTests: XCTestCase {
         
         XCTAssertEqual(requestBuilder.environment, Environment().url)
         XCTAssertEqual(requestBuilder.endpoint, Endpoint().url)
-        XCTAssertEqual(requestBuilder.fullUrl, "http://some-cool-domain-name.com/some/cool/path?firstName=someCoolFirstName")
+        XCTAssertEqual(requestBuilder.url, "http://some-cool-domain-name.com/some/cool/path?firstName=someCoolFirstName")
         XCTAssertEqual(requestBuilder.queryParameters.sorted(by: { $0.name > $1.name }), queryParams.sorted(by: { $0.name > $1.name }))
         XCTAssertEqual(requestBuilder.httpMethod, httpMethod)
         XCTAssertEqual(requestBuilder.httpHeaders, [HTTPHeader.json])
@@ -62,7 +62,7 @@ final class URLRequestBuilderTests: XCTestCase {
     
     func testInitWithWrongURL() {
         let requestBuilder = URLRequestBuilder(environment: InvalidEnvironment(), endpoint: Endpoint(), httpMethod: .get)
-        XCTAssertTrue(requestBuilder.fullUrl.isEmpty)
+        XCTAssertTrue(requestBuilder.url.isEmpty)
     }
     
     func testInitWithWrongQuery() {

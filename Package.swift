@@ -1,12 +1,12 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.7
 
 import PackageDescription
 
 let package = Package(
     name: "NetworkRequester",
     platforms: [
-        .iOS(.v11),
-        .macOS(.v10_15),
+        .iOS(.v13),
+        .macOS(.v12),
         .tvOS(.v13),
     ],
     products: [

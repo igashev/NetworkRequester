@@ -1,6 +1,6 @@
 import Foundation
 
-extension URLRequest {
+public extension URLRequest {
     mutating func addHeader(_ header: HTTPHeader) {
         addValue(header.value, forHTTPHeaderField: header.name)
     }

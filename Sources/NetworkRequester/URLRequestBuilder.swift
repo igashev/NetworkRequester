@@ -11,8 +11,8 @@ public struct URLRequestBuilder {
     
     /// The full URL which is constructed by combining `environment` + `endpoint` + `queryParameters`.
     /// Will return empty string when a complete URL could not be constructed.
-    public var fullUrl: String {
-        guard let url = try? buildedURL() else {
+    public var url: String {
+        guard let url = try? buildURL() else {
             return ""
         }
         
@@ -62,8 +62,37 @@ public struct URLRequestBuilder {
         queryParameters: URLQueryParameters? = nil,
         timeoutInterval: TimeInterval = 30
     ) {
-        self.environment = environment.url
-        self.endpoint = endpoint.url
+        self.init(
+            environment: environment.url,
+            endpoint: endpoint.url,
+            httpMethod: httpMethod,
+            httpHeaders: httpHeaders,
+            httpBody: httpBody,
+            queryParameters: queryParameters,
+            timeoutInterval: timeoutInterval
+        )
+    }
+    
+    /// Initialising the builder with the desired request properties that can build the complete `URLRequest`.
+    /// - Parameters:
+    ///   - environment: The hostname of a URL.
+    ///   - endpoint: The path to a specific resource of a URL.
+    ///   - httpMethod: The HTTP method of the request.
+    ///   - httpHeaders: The HTTP headers of the request.
+    ///   - httpBody: The HTTP body of the request. Not required.
+    ///   - queryParameters: The URL query parameters of a URL. Not required.
+    ///   - timeoutInterval: The timeout interval of a request. Defaults to *30*.
+    public init(
+        environment: String,
+        endpoint: String,
+        httpMethod: HTTPMethod,
+        httpHeaders: [HTTPHeader] = [],
+        httpBody: HTTPBody? = nil,
+        queryParameters: URLQueryParameters? = nil,
+        timeoutInterval: TimeInterval = 30
+    ) {
+        self.environment = environment
+        self.endpoint = endpoint
         self.httpMethod = httpMethod
         self.httpBody = httpBody
         self.httpHeaders = Set(httpHeaders)
@@ -76,7 +105,7 @@ public struct URLRequestBuilder {
     ///  `NetworkingError.encoding(error:)` if it fails to encode the HTTP body.
     /// - Returns: A fully configured `URLRequest` that is ready to be used.
     public func build() throws -> URLRequest {
-        let buildedUrl = try buildedURL()
+        let buildedUrl = try buildURL()
         var request = URLRequest(url: buildedUrl)
         request.timeoutInterval = timeoutInterval
         request.httpMethod = String(describing: httpMethod)
@@ -88,9 +117,22 @@ public struct URLRequestBuilder {
     /// Builds the URL.
     /// - Throws: `NetworkingError.buildingURL` if it fails to build the URL
     /// - Returns: Full URL.
-    private func buildedURL() throws -> URL {
+    private func buildURL() throws -> URL {
         let queryParameters = try _queryParameters?.items() ?? []
         let urlBuilder = URLBuilder(environment: environment, endpoint: endpoint, queryParameters: queryParameters)
         return try urlBuilder.build()
+    }
+}
+
+extension URLRequestBuilder: Equatable {
+    public static func == (lhs: URLRequestBuilder, rhs: URLRequestBuilder) -> Bool {
+        lhs.environment == rhs.environment &&
+        lhs.endpoint == rhs.endpoint &&
+        lhs.queryParameters.sorted(by: { $0.name < $1.name }) ==
+        rhs.queryParameters.sorted(by: { $0.name < $1.name }) &&
+        lhs.httpMethod == rhs.httpMethod &&
+        lhs.httpHeaders == rhs.httpHeaders &&
+        lhs.httpBody == rhs.httpBody &&
+        lhs.timeoutInterval == rhs.timeoutInterval
     }
 }

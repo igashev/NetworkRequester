@@ -16,8 +16,20 @@ public struct HTTPBody {
             do {
                 return try jsonEncoder.encode(encodable)
             } catch let error as EncodingError {
-                throw NetworkingError.encoding(error: error)
+                throw NetworkingError.encoding(underlyingError: error)
             }
+        }
+    }
+}
+
+extension HTTPBody: Equatable {
+    public static func == (lhs: HTTPBody, rhs: HTTPBody) -> Bool {
+        do {
+            let lhsData = try lhs.data()
+            let rhsData = try rhs.data()
+            return lhsData == rhsData
+        } catch {
+            return false
         }
     }
 }

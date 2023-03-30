@@ -1,5 +1,5 @@
 /// Represents an HTTP status of a request.
-public enum HTTPStatus: Int {
+public enum HTTPStatus: Int, Equatable {
     
     // MARK: - 1xx Informational
     
@@ -80,12 +80,12 @@ public enum HTTPStatus: Int {
     case networkConnectTimeoutError = 599
 }
 
-extension HTTPStatus {
-    public var code: Int { rawValue }
+public extension HTTPStatus {
+    var code: Int { rawValue }
     
-    public var isInformational: Bool { 100...199 ~= rawValue }
-    public var isSuccess: Bool { 200...299 ~= rawValue }
-    public var isRedirection: Bool { 300...399 ~= rawValue }
-    public var isClientError: Bool { 400...499 ~= rawValue }
-    public var isServerError: Bool { 500...599 ~= rawValue }
+    var isInformational: Bool { 100...199 ~= rawValue }
+    var isSuccess: Bool { 200...299 ~= rawValue }
+    var isRedirection: Bool { 300...399 ~= rawValue }
+    var isClientError: Bool { 400...499 ~= rawValue }
+    var isServerError: Bool { 500...599 ~= rawValue }
 }
