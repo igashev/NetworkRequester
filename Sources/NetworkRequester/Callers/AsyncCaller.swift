@@ -2,11 +2,11 @@ import Foundation
 
 /// Use this object to make network calls and receive decoded values using the new structured concurrency (async/await).
 public struct AsyncCaller {
-    private let middlewares: [Middleware]
-    private let urlSession: URLSession
-    private let utility: CallerUtility
+    public let urlSession: URLSession
+    public let middlewares: [Middleware]
     
-    private var middlewaresAsyncStream: AsyncThrowingStream<Middleware, Error> {
+    private let utility: CallerUtility
+    private var middlewaresOnRequestAsyncStream: AsyncThrowingStream<Middleware, Error> {
         .init { continuation in
             middlewares.forEach { continuation.yield($0) }
             continuation.finish()
@@ -20,8 +20,8 @@ public struct AsyncCaller {
     ///   - middleware: Middleware that is injected in the networking events.
     public init(
         urlSession: URLSession = .shared,
-        decoder: JSONDecoder,
-        middleware: [Middleware] = []
+        middleware: [Middleware] = [],
+        decoder: JSONDecoder
     ) {
         self.urlSession = urlSession
         self.middlewares = middleware
@@ -37,7 +37,11 @@ public struct AsyncCaller {
         
         do {
             let (data, response) = try await urlSession.data(for: mutableRequest)
-            let tryMap = try utility.checkResponseForErrors(data: data, urlResponse: response, errorType: errorType)
+            let tryMap = try utility.checkResponseForErrors(
+                data: data,
+                urlResponse: response,
+                errorType: errorType
+            )
             let tryMap2: D = try utility.decodeIfNecessary(tryMap)
             middlewares.forEach { $0.onResponse(data: data, response: response) }
             return tryMap2
@@ -48,16 +52,20 @@ public struct AsyncCaller {
         }
     }
     
-    public func call<E: DecodableError>(
+    public func call<DE: DecodableError>(
         using builder: URLRequestBuilder,
-        errorType: E.Type
+        errorType: DE.Type
     ) async throws {
         var mutableRequest = try builder.build()
         try await runMiddlewaresOnRequest(request: &mutableRequest)
         
         do {
             let (data, response) = try await urlSession.data(for: mutableRequest)
-            let tryMap = try utility.checkResponseForErrors(data: data, urlResponse: response, errorType: errorType)
+            let tryMap = try utility.checkResponseForErrors(
+                data: data,
+                urlResponse: response,
+                errorType: errorType
+            )
             try utility.tryMapEmptyResponseBody(data: tryMap)
             middlewares.forEach { $0.onResponse(data: data, response: response) }
         } catch {
@@ -68,7 +76,11 @@ public struct AsyncCaller {
     }
     
     private func runMiddlewaresOnRequest(request: inout URLRequest) async throws {
-        for try await middleware in middlewaresAsyncStream {
+        guard !middlewares.isEmpty else {
+            return
+        }
+        
+        for try await middleware in middlewaresOnRequestAsyncStream {
             try await middleware.onRequest(&request)
         }
     }
