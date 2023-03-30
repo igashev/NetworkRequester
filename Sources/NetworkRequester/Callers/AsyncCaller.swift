@@ -1,6 +1,35 @@
 import Foundation
 
 /// Use this object to make network calls and receive decoded values using the new structured concurrency (async/await).
+///
+/// ```
+/// struct User: Decodable {
+///     let name: String
+/// }
+///
+/// struct BackendError: DecodableError {
+///     let errorCode: Int
+///     let localizedError: String
+/// }
+///
+/// let requestBuilder = URLRequestBuilder(
+///     environment: "https://amazingapi.com",
+///     endpoint: "v1/users",
+///     httpMethod: .get,
+///     httpHeaders: [
+///         .json,
+///         .authorization(bearerToken: "secretBearerToken")
+///     ],
+///     httpBody: nil,
+///     queryParameters: nil
+/// )
+///
+/// let caller = AsyncCaller(decoder: JSONDecoder())
+/// let user: User = try await caller.call(
+///     using: requestBuilder,
+///     errorType: BackendError.self
+/// )
+/// ```
 public struct AsyncCaller {
     public let urlSession: URLSession
     public let middlewares: [Middleware]
@@ -32,7 +61,21 @@ public struct AsyncCaller {
         using builder: URLRequestBuilder,
         errorType: DE.Type
     ) async throws -> D {
-        var mutableRequest = try builder.build()
+        try await call(using: builder.build(), errorType: errorType)
+    }
+    
+    public func call<DE: DecodableError>(
+        using builder: URLRequestBuilder,
+        errorType: DE.Type
+    ) async throws {
+        try await call(using: builder.build(), errorType: errorType)
+    }
+    
+    public func call<D: Decodable, DE: DecodableError>(
+        using request: URLRequest,
+        errorType: DE.Type
+    ) async throws -> D {
+        var mutableRequest = request
         try await runMiddlewaresOnRequest(request: &mutableRequest)
         
         do {
@@ -53,10 +96,10 @@ public struct AsyncCaller {
     }
     
     public func call<DE: DecodableError>(
-        using builder: URLRequestBuilder,
+        using request: URLRequest,
         errorType: DE.Type
     ) async throws {
-        var mutableRequest = try builder.build()
+        var mutableRequest = request
         try await runMiddlewaresOnRequest(request: &mutableRequest)
         
         do {
