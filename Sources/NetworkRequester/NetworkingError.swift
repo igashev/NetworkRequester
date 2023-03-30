@@ -6,18 +6,18 @@ public enum NetworkingError: Error {
     /// Thrown when constructing URL fails.
     case buildingURL
     
-    /// Thrown when encoding body's data fails.
-    case encoding(error: EncodingError)
+    /// Thrown when encoding request's data fails.
+    case encoding(underlyingError: EncodingError)
     
     /// Thrown when decoding response's data fails.
-    case decoding(error: DecodingError)
+    case decoding(underlyingError: DecodingError)
     
-    /// Thrown when the network request fails.
-    case networking(status: HTTPStatus, error: Error?)
+    /// Thrown when the network request fails (returns anything else than 200).
+    case networking(status: HTTPStatus, underlyingError: Error?)
     
-    /// Thrown when an unknown error is thrown (no other error from the above has been catched),
-    /// optionally forwarding an underlying error if there is one.
-    case unknown(Error?)
+    /// Thrown when an unknown error is encountered (no other error from the above has been catched).
+    /// Optionally forwarding an underlying error if there is one.
+    case unknown(underlyingError: Error?)
 }
 
 extension NetworkingError: Equatable {
